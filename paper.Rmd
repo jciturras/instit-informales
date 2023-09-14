@@ -1,0 +1,107 @@
+---
+title: "Lorem ipsum dolor sit amet"
+css: "input/css/custom.css" # custom CSS para html
+linestretch: '1.5'          # interlineado 
+link-citations: yes         # citas linkeadas
+author:
+- name: Duke A Caboom
+  affiliation: University of Tuktoyaktuk
+  email: dtholmes@mail.ubc.ca
+  number: 1
+- name: Justin d'Ottawa
+  affiliation: University of Ottawa
+  number: 2
+- name: Pedro Torres
+  number: 1,2 
+# Nota: Autores que comparten filiacion, poner el mismo number y declarar filiación una sola vez.  
+abstract: "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do *eiusmod tempor* incididunt ut labore et dolore magna aliqua. Ut enimad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
+output:
+  bookdown::pdf_document2:
+    template: null
+    toc: false
+    keep_tex: false
+    pandoc_args:
+      - --template=input/mytemplate.tex #custom template para usar autores con afiliacion  
+  bookdown::html_document2:
+    number_sections: false
+linkcolor: blue                         # enlaces y citas en color azul
+bibliography: input/bib/library.bib     # bibliografia en bibtex
+editor_options:
+  chunk_output_type: console            # en RStudio, mostrar output en consola
+geometry: "left=2cm,right=2cm,top=3cm,bottom=3cm" # márgenes de página
+header-includes:
+  - \usepackage{times}           # Times New Roman
+  - \usepackage{caption}
+  - \captionsetup[figure, table]{labelfont={bf},labelformat={default},labelsep=period}
+  - \usepackage{graphicx}
+  - \usepackage{float}
+  - \usepackage{booktabs}
+  - \usepackage{longtable}
+  - \usepackage{array}
+  - \usepackage{multirow}
+  - \usepackage{wrapfig}
+  - \usepackage{float}
+  - \usepackage{colortbl}
+  - \usepackage{pdflscape}
+  - \usepackage{tabu}
+  - \usepackage{threeparttable}
+---
+
+```{r setup, include=FALSE}
+if (!require("pacman")) install.packages("pacman")  #si falta pacman, instalar
+if (!require("tinytex")) install.packages("tinytex")#si falta tinytex, instalar
+pacman::p_load(knitr, kableExtra, dplyr, ggplot2,sjmisc,texreg) # librerias
+knitr::opts_chunk$set(warning = FALSE,  # mensaje de warning
+                      message = FALSE,  # mensajes/avisos de librerias  
+                      cache = FALSE,    # cache de los chunks,usar analisis pesados
+                      out.width = '85%',# largo de imagen en %
+                      fig.pos= "H",     # posicion figuras H = HERE
+                      echo = FALSE      # incluir chunk en output
+                      )
+options(scipen=999) # notacion cientifica
+rm(list=ls())       # limpiar workspace
+options(knitr.kable.NA = '') # NA en kable = ''
+
+table_format = if(is_html_output()) { # Usar en argumento "format=" de kable
+  "html"
+} else if(is_latex_output()) {
+  "latex"
+}
+
+fwidth = if(is_html_output()) { #Usar en argumento "full_width" de kableExtra
+  T
+} else if(is_latex_output()) {
+  F
+}
+```
+
+```{r}
+df1<- haven::read_dta(here::here("input/data/original/base_89.dta"))
+
+sjmisc::frq(df1$sexo,weights = df1$pond)
+df1$sex <- df1$sexo
+frq(df1$sex,weights = df1$pond) %>% kable() %>% kable_classic()
+
+sjmisc::frq(df1$edad,weights = df1$pond)
+df1$agegrp <- car::recode(df1$edad,"18:29='29 agnos o menos';30:60='30 a 60';61:100='61 agnos o mas'")
+sjmisc::frq(df1$agegrp,weights = df1$pond)  %>% kable() %>% kable_classic()
+frq(car::recode(df1$esc_nivel_1,"c(88,99)=NA"),weights = df1$pond) %>% kable() %>% kable_classic()
+
+
+df1$edcat <- car::recode(as.numeric(df1$esc_nivel_1),"0:3='Menos de Media completa';
+                         4='Media completa';
+                         c(5,7)='Superior tecnica o universitaria incompleta'; 
+                         c(6,8)='Superior tecnica o universitaria completa';
+                         c(9,10)='Postgrado'; c(88,99)=NA",as.factor=T)
+
+df1$edcat <- factor(df1$edcat,levels =c("Menos de Media completa","Media completa",
+                                        "Superior tecnica o universitaria incompleta",
+                                        "Superior tecnica o universitaria completa",
+                                        "Postgrado"))
+
+frq(df1$edcat,show.na = F,weights = df1$pond) %>% kable() %>% kable_classic()
+```
+
+
+
+
